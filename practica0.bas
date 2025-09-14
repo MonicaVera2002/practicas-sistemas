@@ -12,7 +12,7 @@ Sub Combinaciones()
     Dim suma As Integer
 
     ' Consulta el numero de dados
-    nDados = InputBox("¿Cuantos dados quieres enumerar? (1 a 5)", "Numero de dados", 2)
+    nDados = InputBox("Â¿Cuantos dados quieres enumerar? (1 a 5)", "Numero de dados", 2)
     If nDados < 1 Or nDados > 5 Then
         MsgBox "Solo se permite entre 1 y 5"
         Exit Sub
@@ -93,7 +93,7 @@ Sub Combinaciones()
         End If
     Next i
     
-    MsgBox "¡Combinaciones generadas en la hoja 'Combinaciones'!"
+    MsgBox "Â¡Combinaciones generadas en la hoja 'Combinaciones'!"
 End Sub
 
 ' ==========Frecuencias==============
