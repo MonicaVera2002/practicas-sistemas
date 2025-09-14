@@ -1,24 +1,25 @@
-Attribute VB_Name = "Module1"
+Attribute VB_Name = "Practica0"
 Option Explicit
 
 ' Codigo para generar todas las combinaciones posibles
 ' dando la opcion de escoger cuantos dados usar (1 - 5)
 ' y calcular la suma de sus caras.
+Public gNumDados As Integer   ' <- Variable global para usar en el titulo
+
 Sub Combinaciones()
     Dim ws As Worksheet
     Dim i As Long, j As Long, k As Long, l As Long, m As Long
     Dim fila As Long
-    Dim nDados As Integer
     Dim suma As Integer
 
     ' Consulta el numero de dados
-    nDados = InputBox("¿Cuantos dados quieres enumerar? (1 a 5)", "Numero de dados", 2)
-    If nDados < 1 Or nDados > 5 Then
+    gNumDados = InputBox("¿Cuantos dados quieres enumerar? (1 a 5)", "Numero de dados", 2)
+    If gNumDados < 1 Or gNumDados > 5 Then
         MsgBox "Solo se permite entre 1 y 5"
         Exit Sub
     End If
     
-    ' Crear hoja nueva o limpiar si ya existe
+    ' Crea hoja nueva o limpia si ya existe
     On Error Resume Next
     Set ws = ThisWorkbook.Sheets("Combinaciones")
     If ws Is Nothing Then
@@ -32,12 +33,14 @@ Sub Combinaciones()
     fila = 2
     
     ' Encabezados
+    Dim nDados As Integer
+    nDados = gNumDados
     For i = 1 To nDados
         ws.Cells(1, i).Value = "Dado " & i
     Next i
     ws.Cells(1, nDados + 1).Value = "Suma"
 
-    ' Generar combinaciones de 1 a 5 dados
+    ' Genera combinaciones de 1 a 5 dados
     For i = 1 To 6
         If nDados = 1 Then
             suma = i
@@ -93,11 +96,11 @@ Sub Combinaciones()
         End If
     Next i
     
-    MsgBox "¡Combinaciones generadas en la hoja 'Combinaciones'!"
+    MsgBox "Combinaciones generadas en la hoja 'Combinaciones'"
 End Sub
 
 ' ==========Frecuencias==============
-' Creacion de las tablas de frecuencia para graficar
+' Creacion de las tablas de frecuencia SIN graficar
 
 Sub TFrecuencia()
     Dim ws As Worksheet, ws2 As Worksheet
@@ -141,25 +144,11 @@ Sub TFrecuencia()
         ws2.Cells(i, 2).Value = Application.WorksheetFunction.CountIf(ws.Range(ws.Cells(2, colSuma), ws.Cells(uFila, colSuma)), ws2.Cells(i, 1).Value)
     Next i
     
-    ' Crear grafico de columnas
-    Dim grafico As ChartObject
-    Set grafico = ws2.ChartObjects.Add(Left:=300, Width:=400, Top:=10, Height:=300)
-    With grafico.Chart
-        .ChartType = xlColumnClustered
-        .SetSourceData Source:=ws2.Range("A1:B" & ultimaFilaFrecuencia)
-        .HasTitle = True
-        .ChartTitle.Text = "Distribucion de las Sumas"
-        .Axes(xlCategory).HasTitle = True
-        .Axes(xlCategory).AxisTitle.Text = "Suma"
-        .Axes(xlValue).HasTitle = True
-        .Axes(xlValue).AxisTitle.Text = "Frecuencia"
-    End With
-    
-    MsgBox "Tabla de frecuencia y grafico creados en la hoja 'Graficas'."
+    MsgBox "Tabla de frecuencia creada en la hoja 'Graficas'. Ahora ejecuta la macro 'Graficos'."
 End Sub
 
-
 '========Graficos=============
+' Se crea el grafico
 
 Sub Graficos()
     Dim ws As Worksheet
@@ -177,7 +166,7 @@ Sub Graficos()
         Exit Sub
     End If
     
-    ' Borrar graficos anteriores
+    ' Borrar graficos hechos
     For Each chartObj In ws.ChartObjects
         chartObj.Delete
     Next chartObj
@@ -189,7 +178,7 @@ Sub Graficos()
         Exit Sub
     End If
     
-    ' Titulo dinamico usando la variable global gNumDados
+    ' Titulo que se actualiza con el numero de dados utilizados
     If gNumDados >= 1 Then
         If gNumDados = 1 Then
             tituloGrafico = "Distribucion de la suma de 1 dado"
@@ -200,10 +189,11 @@ Sub Graficos()
         tituloGrafico = "Distribucion de las sumas"
     End If
     
-    ' Crear grafico con UNA SOLA SERIE (frecuencia)
+    ' Crear grafico con la frecuencia
     Set chartObj = ws.ChartObjects.Add(Left:=250, Top:=50, Width:=500, Height:=300)
     With chartObj.Chart
         .ChartType = xlColumnClustered
+        
         ' borrar series previas por seguridad
         Do While .SeriesCollection.Count > 0
             .SeriesCollection(1).Delete
@@ -211,7 +201,7 @@ Sub Graficos()
         
         Set s = .SeriesCollection.NewSeries
         s.Name = "Frecuencia"
-        s.Values = ws.Range("B2:B" & uFila)   ' Y = frecuencias (solo la naranja)
+        s.Values = ws.Range("B2:B" & uFila)   ' Y = frecuencias
         s.XValues = ws.Range("A2:A" & uFila)  ' X = sumas
         
         ' Color naranja
@@ -227,7 +217,7 @@ Sub Graficos()
         .Axes(xlValue).HasTitle = True
         .Axes(xlValue).AxisTitle.Text = "Frecuencia"
         
-        ' Eliminar leyenda (opcional)
+        ' Quitar leyenda (opcional)
         On Error Resume Next
         .Legend.Delete
         On Error GoTo 0
@@ -235,6 +225,8 @@ Sub Graficos()
     
     MsgBox "Grafico (solo frecuencias) generado en la hoja 'Graficas'."
 End Sub
+
+
 
 
 
