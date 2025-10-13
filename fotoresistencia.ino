@@ -1,0 +1,12 @@
+int sensor = A0;
+int lectura;
+
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  lectura = analogRead(sensor);
+  Serial.println(lectura);
+  delay (1000);
+}
