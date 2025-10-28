@@ -1,58 +1,108 @@
 #include <SoftwareSerial.h>
 
-// --- Definición de pines para los sensores ---
-int temperature = A0;   
-int photoresistor = A1;  
-int proximity = 9; 
-  
+// --- Declaramos las variables----
+int temperature = A0;
+int photoresistor = A1;
+int proximity = 9;
+int lastState = HIGH;
+int rx = 2;
+int tx = 3;
+SoftwareSerial BT(rx, tx); // RX=2, TX=3
 
-// --- Variables para el estado del FC-51 ---
-int lastState = HIGH;  // Empieza en HIGH porque sin obstáculo el sensor da HIGH
+// ---Declaramos la llave XOR---
+byte llave = 0b11001100;
 
-// --- Configuración del módulo HC-05 ---
-int rx = 2;   // RX del Arduino (conectar al TX del HC-05)
-int tx = 3;   // TX del Arduino (conectar al RX del HC-05)
-SoftwareSerial BT(rx, tx); // Comunicación Bluetooth
+
+String cifrarBinario(String mensaje);
+String descifrarBinario(String mensajeBinario);
 
 void setup() {
-  Serial.begin(9600);   // Comunicación con el monitor serial
-  BT.begin(9600);       // Comunicación con el HC-05 (velocidad por defecto)
-
+  Serial.begin(9600);
+  BT.begin(9600);
   pinMode(proximity, INPUT);
 
-  Serial.println("Waiting for data.");
-  BT.println("Waiting for data.");
+  Serial.println("Bluetooth y Serial listos: cifrado en binario + mensaje descifrado.");
+  BT.println("Bluetooth listo: cifrado en binario + mensaje descifrado.");
 }
 
 void loop() {
-  // ---- Lectura del sensor LM35 ----
+  // ---- Se realiza la lectura de los sensores ----
   int analogTemperature = analogRead(temperature);
-  float voltage = (analogTemperature / 1023.0) * 5000;  // en milivoltios
-  float temperatureC = voltage / 100;  // Cada 10 mV equivale a 1 °C
-
-  // ---- Lectura del sensor KY-018 ----
+  float voltage = (analogTemperature / 1023.0) * 5000;
+  float temperatureC = voltage / 100.0;
   int analogPhotoresistor = analogRead(photoresistor);
-
-  // ---- Lectura del sensor FC-51 ----
   int currentState = digitalRead(proximity);
 
-  // ---- Construir mensaje ----
-  String message = "Temperature: " + String(temperatureC, 1) + " °C | Brightness: " + String(analogPhotoresistor) + " | Movement: ";
+  // ---- Mensaje de los datos de los sensores ----
+  String message = "Temp: " + String(temperatureC, 1) +
+                   " °C | Luz: " + String(analogPhotoresistor) +
+                   " | Movimiento: ";
 
   if (currentState == LOW && lastState == HIGH) {
-    message += " Detected!!";
+    message += "Detectado!";
   } else if (currentState == HIGH && lastState == LOW) {
-    message += " Removed!!";
+    message += "Removido!";
   } else {
-    message += " Unchanged.";
+    message += "Sin cambios.";
   }
 
-  // ---- Mostrar datos en el monitor serial y enviarlos por Bluetooth ----
+  // ---- Cifrar mensaje en binario ----
+  String cifrado = cifrarBinario(message);
+
+  // ---- Descifrar (desde binario) ----
+  String descifrado = descifrarBinario(cifrado);
+
+  // ---- Enviamos información a la terminal de Arduino ----
+  Serial.println("---------------------------");
+  Serial.println("Mensaje original:");
   Serial.println(message);
-  BT.println(message);
+  Serial.println("Mensaje cifrado (binario):");
+  Serial.println(cifrado);
+  Serial.println("Mensaje descifrado:");
+  Serial.println(descifrado);
 
-  // ---- Actualiza el estado anterior ----
+  // ---- Enviamos el mensaje a Bluetooth ----
+  BT.println("---------------------------");
+  BT.println("Mensaje cifrado (binario):");
+  BT.println(cifrado);
+  BT.println("Mensaje descifrado:");
+  BT.println(descifrado);
+
   lastState = currentState;
-
   delay(4000);
 }
+
+// ======================================================
+// Cifrar mensaje en binario con XOR
+// ======================================================
+String cifrarBinario(String mensaje) {
+  String binario = "";
+  for (int i = 0; i < mensaje.length(); i++) {
+    char cifrado = mensaje[i] ^ llave;
+    for (int b = 7; b >= 0; b--) {
+      binario += bitRead(cifrado, b) ? '1' : '0';
+    }
+    binario += ' ';
+  }
+  return binario;
+}
+
+// ======================================================
+// Descifrar mensaje binario (inverso del anterior)
+// ======================================================
+String descifrarBinario(String mensajeBinario) {
+  String texto = "";
+  for (int i = 0; i < mensajeBinario.length(); i += 9) { 
+    byte valor = 0;
+    for (int b = 0; b < 8; b++) {
+      if (mensajeBinario[i + b] == '1') {
+        bitWrite(valor, 7 - b, 1);
+      }
+    }
+    //Aplicamos XOR para decifrar
+    char descifrado = valor ^ llave; 
+    texto += descifrado;
+  }
+  return texto;
+}
+
