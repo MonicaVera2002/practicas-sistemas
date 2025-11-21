@@ -3,8 +3,22 @@ int ldrPin  = A1;
 int humDig  = 4;
 int tapPin  = 2;
 
-// Clave XOR de 1 byte (puedes cambiarla)
-const byte XOR_KEY = 0x5A;  
+// Genera la llave XOR
+byte llave = 0b11001100;
+
+// Se cifran los datos generados por los sensores
+String cifrarBinario(String mensaje) {
+  String binario = "";
+  for (int i = 0; i < mensaje.length(); i++) {
+    char cifrado = mensaje[i] ^ llave;
+    for (int b = 7; b >= 0; b--) {
+      binario += bitRead(cifrado, b) ? '1' : '0';
+    }
+    binario += ' ';
+  }
+  return binario;
+}
+
 
 void setup() {
   Serial.begin(9600);
@@ -13,33 +27,29 @@ void setup() {
   pinMode(tapPin, INPUT_PULLUP);
 }
 
-void sendXOR(String data) {
-  for (int i = 0; i < data.length(); i++) {
-    byte c = data[i] ^ XOR_KEY;
-    Serial.write(c);
-  }
-  Serial.write('\n'); // separador de línea
-}
-
 void loop() {
   int tempVal = analogRead(tempPin);
   float tempC = (tempVal * 5.0 / 1023.0) * 10;
 
+  // Se recolectan todos los datos como enteros
   int luzVal = analogRead(ldrPin);
   int humD = digitalRead(humDig);
   int tap = digitalRead(tapPin);
 
-  // Empaquetamos en un solo string
+  // Se juntan todos los datos dentro de un String
   String packet = "";
   packet += "T:" + String(tempC) + ";";
   packet += "L:" + String(luzVal) + ";";
   packet += "HD:" + String(humD) + ";";
   packet += "G:" + String(tap);
 
-  // Enviar cifrado
-  sendXOR(packet);
+  // Se cifran los datos en binario dentro de un pequeño paquete
+  String cifrado = cifrarBinario(packet);
 
-  delay(500);
+  // Envían los datos cifrados a la Raspberry
+  Serial.println(cifrado);
+
+  delay(1000);
 }
 
 
