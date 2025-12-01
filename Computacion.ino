@@ -1,12 +1,59 @@
-int tempPin = A0;
-int ldrPin  = A1;
-int humDig  = 4;
-int tapPin  = 2;
+int temperature = A0;
+int photoresistor = A1;
+int proximity = 8;
+int tap = 12;                 
+int lastState = HIGH;
 
-// Genera la llave XOR
+// Se crea la llave XOR
 byte llave = 0b11001100;
 
-// Se cifran los datos generados por los sensores
+String cifrarBinario(String mensaje);
+String descifrarBinario(String mensajeBinario);
+
+// Comenzamos con la comunicación serial
+void setup() {
+  Serial.begin(9600);   
+  pinMode(proximity, INPUT);
+  pinMode(tap, INPUT);
+
+  Serial.println("Comunicacion serial lista");
+}
+
+
+void loop() {
+  // Leen los datos
+  int analogTemperature = analogRead(temperature);
+  float voltage = (analogTemperature / 1023.0) * 5000;
+  float temperatureC = voltage / 100.0;
+
+  int analogPhotoresistor = analogRead(photoresistor);
+  int currentState = digitalRead(proximity);
+  int tapState = digitalRead(tap);
+
+  // Creamos la forma del paquete para enviarlo 
+  String message = "Temp:" + String(temperatureC, 1) +
+                   "|Luz:" + String(analogPhotoresistor) +
+                   "|Mov:";
+
+  if (currentState == LOW && lastState == HIGH) {
+    message += "Detectado";
+  } else if (currentState == HIGH && lastState == LOW) {
+    message += "Removido";
+  } else {
+    message += "SinCambio";
+  }
+
+  message += "|Toque:" + String(tapState);
+
+  // Enviamos el cifrado
+  String cifrado = cifrarBinario(message);
+  Serial.println(cifrado);
+
+  lastState = currentState;
+  delay(2000);
+}
+
+// Cifrado del mensaje en tipo texto
 String cifrarBinario(String mensaje) {
   String binario = "";
   for (int i = 0; i < mensaje.length(); i++) {
@@ -18,40 +65,6 @@ String cifrarBinario(String mensaje) {
   }
   return binario;
 }
-
-
-void setup() {
-  Serial.begin(9600);
-
-  pinMode(humDig, INPUT);
-  pinMode(tapPin, INPUT_PULLUP);
-}
-
-void loop() {
-  int tempVal = analogRead(tempPin);
-  float tempC = (tempVal * 5.0 / 1023.0) * 10;
-
-  // Se recolectan todos los datos como enteros
-  int luzVal = analogRead(ldrPin);
-  int humD = digitalRead(humDig);
-  int tap = digitalRead(tapPin);
-
-  // Se juntan todos los datos dentro de un String
-  String packet = "";
-  packet += "T:" + String(tempC) + ";";
-  packet += "L:" + String(luzVal) + ";";
-  packet += "HD:" + String(humD) + ";";
-  packet += "G:" + String(tap);
-
-  // Se cifran los datos en binario dentro de un pequeño paquete
-  String cifrado = cifrarBinario(packet);
-
-  // Envían los datos cifrados a la Raspberry
-  Serial.println(cifrado);
-
-  delay(1000);
-}
-
 
 
 
