@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - Sistema Domotico</title>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <h1>Dashboard Sistema Domotico</h1>
+
+    <div class="grid">
+        <div class="card">
+            <div class="titulo-sensor">Temperatura</div>
+            <canvas id="lm35"></canvas>
+        </div>
+
+        <div class="card">
+            <div class="titulo-sensor">Gas o Humo</div>
+            <canvas id="mq2"></canvas>
+        </div>
+
+        <div class="card">
+            <div class="titulo-sensor">Ruido </div>
+            <canvas id="ruido"></canvas>
+        </div>
+
+        <div class="card">
+            <div class="titulo-sensor">Temblores</div>
+            <canvas id="vibracion"></canvas>
+        </div>
+    </div>
+
+    <div id="bottom" class="card">
+        <div class="titulo-sensor">Intrusion</div>
+        <canvas id="pir"></canvas>
+    </div>
+    <script src="funciones.js"></script>
+
+</body>
+</html>
+
+
